@@ -248,6 +248,17 @@ textarea.inline-input{resize:none;line-height:1.5;min-height:32px;}
 .toast.err{border-color:var(--red);color:var(--red);}
 
 .st{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
+.an-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:10px;background:var(--bg3);font-size:13px;line-height:1.5;}
+.an-item .an-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.an-item .an-text{flex:1;}
+.an-item .an-label{font-weight:700;margin-bottom:2px;}
+.an-item.pos{border-left:3px solid var(--green);}
+.an-item.neg{border-left:3px solid var(--red);}
+.an-item.neu{border-left:3px solid var(--yellow);}
+.an-item.info{border-left:3px solid var(--blue);}
+.signal-long{color:var(--green);}
+.signal-short{color:var(--red);}
+.signal-wait{color:var(--yellow);}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 </style>
@@ -278,6 +289,7 @@ textarea.inline-input{resize:none;line-height:1.5;min-height:32px;}
   <button class="tab on" onclick="switchTab(this,'calc')">Máy tính</button>
   <button class="tab" onclick="switchTab(this,'log')">Lịch sử</button>
   <button class="tab" onclick="switchTab(this,'stats')">Thống kê</button>
+  <button class="tab" onclick="switchTab(this,'analysis')">Phân tích</button>
   <div class="spacer"></div>
   <button class="theme-btn" onclick="toggleTheme()" id="tbtn" title="Đổi giao diện">🌙</button>
 </nav>
@@ -413,6 +425,169 @@ textarea.inline-input{resize:none;line-height:1.5;min-height:32px;}
   <div class="sg" id="sg"></div>
   <div class="st">Theo tháng</div>
   <div id="mwrap"></div>
+</div>
+
+<!-- ══ PHÂN TÍCH ══ -->
+<div id="tab-analysis" class="page">
+  <div style="max-width:760px;margin:0 auto;">
+
+    <!-- Hướng dẫn nhanh -->
+    <div style="background:rgba(79,147,248,.07);border:1px solid rgba(79,147,248,.2);border-radius:12px;padding:14px 18px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.7;">
+      💡 <strong>Cách xem trên Binance:</strong>
+      Vào chart → khung <strong>15 phút</strong> → bật <strong>MA(7)</strong>, <strong>MA(25)</strong>, <strong>MA(99)</strong> và <strong>RSI</strong> trong Indicators.
+      Sau đó chuyển sang khung <strong>1h</strong> để xem màu nến xác nhận xu hướng lớn hơn.
+    </div>
+
+    <!-- Coin + Giá -->
+    <div class="card">
+      <div class="card-label">Thông tin cơ bản</div>
+      <div class="fg" style="grid-template-columns:1fr 1fr 1fr 1fr">
+        <div class="f">
+          <label>Coin</label>
+          <input type="text" id="an-coin" placeholder="ETH, BTC, HYPE..." oninput="this.value=this.value.toUpperCase();runAnalysis()">
+        </div>
+        <div class="f">
+          <label>Giá hiện tại ($)</label>
+          <input type="text" id="an-price" placeholder="VD: 2.350" oninput="runAnalysis()" onblur="fmtInput(this)">
+        </div>
+        <div class="f">
+          <label>Margin ($)</label>
+          <input type="number" id="an-margin" placeholder="50" value="50" min="1" oninput="runAnalysis()">
+          <span class="help">Số tiền bỏ vào lệnh</span>
+        </div>
+        <div class="f">
+          <label>Đòn bẩy</label>
+          <select id="an-lev" onchange="runAnalysis()">
+            <option value="3">3x</option>
+            <option value="5" selected>5x</option>
+            <option value="10">10x</option>
+            <option value="15">15x</option>
+            <option value="20">20x</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- MA -->
+    <div class="card">
+      <div class="card-label">📈 MA — Xem trên chart khung 15 phút</div>
+      <div class="fg" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="f">
+          <label>MA 7 ($)</label>
+          <input type="text" id="an-ma7" placeholder="2.340" oninput="runAnalysis()" onblur="fmtInput(this)">
+          <span class="help">Đường nhanh nhất</span>
+        </div>
+        <div class="f">
+          <label>MA 25 ($)</label>
+          <input type="text" id="an-ma25" placeholder="2.300" oninput="runAnalysis()" onblur="fmtInput(this)">
+          <span class="help">Đường trung bình</span>
+        </div>
+        <div class="f">
+          <label>MA 99 ($)</label>
+          <input type="text" id="an-ma99" placeholder="2.200" oninput="runAnalysis()" onblur="fmtInput(this)">
+          <span class="help">Đường dài hạn</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RSI -->
+    <div class="card">
+      <div class="card-label">⚡ RSI — Xem trên chart khung 15 phút</div>
+      <div class="fg" style="grid-template-columns:1fr 2fr">
+        <div class="f">
+          <label>Giá trị RSI (lấy RSI 12)</label>
+          <input type="number" id="an-rsi" placeholder="58" min="0" max="100" oninput="runAnalysis()">
+          <span class="help">Binance hiện RSI(6), RSI(12), RSI(24) — lấy số RSI(12)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0;background:var(--bg3);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--text2);line-height:1.8;border:1px solid var(--border);">
+          <div>
+            🔴 <strong>&lt; 30</strong> — Quá bán, có thể bật lên<br>
+            🟡 <strong>30–45</strong> — Yếu, xu hướng giảm<br>
+            ⚪ <strong>45–55</strong> — Trung tính, chờ xác nhận<br>
+            🟢 <strong>55–70</strong> — Khoẻ, xu hướng tăng<br>
+            🔥 <strong>&gt; 70</strong> — Quá mua, cẩn thận đảo chiều
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nến -->
+    <div class="card">
+      <div class="card-label">🕯 Màu nến — nhìn cây nến ĐÃ ĐÓNG (kế bên trái cây cuối)</div>
+      <div style="background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--text2);">
+        ⚠️ <strong>Cây nến cuối cùng bên phải đang chạy — chưa đóng, không tính!</strong><br>
+        Nhìn cây <strong>kế bên trái</strong> nó — cây đó mới đóng rồi, mới đáng tin.
+      </div>
+      <div class="fg" style="grid-template-columns:1fr 1fr">
+        <div class="f">
+          <label>Nến 15 phút (đã đóng)</label>
+          <select id="an-c1h" onchange="runAnalysis()">
+            <option value="">-- Chọn --</option>
+            <option value="green">🟢 Xanh (đang tăng)</option>
+            <option value="red">🔴 Đỏ (đang giảm)</option>
+          </select>
+          <span class="help">Dùng để tìm điểm vào lệnh</span>
+        </div>
+        <div class="f">
+          <label>Nến 1 giờ (đã đóng)</label>
+          <select id="an-c4h" onchange="runAnalysis()">
+            <option value="">-- Chọn --</option>
+            <option value="green">🟢 Xanh (đang tăng)</option>
+            <option value="red">🔴 Đỏ (đang giảm)</option>
+          </select>
+          <span class="help">Dùng để xác nhận xu hướng lớn hơn</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KẾT QUẢ -->
+    <div id="an-result" style="display:none">
+      <div id="an-signal-box" class="card" style="text-align:center;padding:28px 20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Tín hiệu gợi ý</div>
+        <div id="an-signal" style="font-size:44px;font-weight:800;letter-spacing:-1px;margin-bottom:8px"></div>
+        <div id="an-signal-sub" style="font-size:13px;color:var(--text2)"></div>
+      </div>
+
+      <div class="rg">
+        <div class="rc b">
+          <div class="rl">📍 Điểm vào đề xuất</div>
+          <div class="rv cb" id="an-entry">—</div>
+          <div class="rs" id="an-entry-note"></div>
+        </div>
+        <div class="rc g">
+          <div class="rl">🎯 Take Profit (TP)</div>
+          <div class="rv cg" id="an-tp">—</div>
+          <div class="rs" id="an-tp-note"></div>
+        </div>
+        <div class="rc r">
+          <div class="rl">🛡 Stop Loss (SL)</div>
+          <div class="rv cr" id="an-sl">—</div>
+          <div class="rs" id="an-sl-note"></div>
+        </div>
+        <div class="rc y">
+          <div class="rl">⚖️ Tỷ lệ R:R</div>
+          <div class="rv cy" id="an-rr">—</div>
+          <div class="rs" id="an-rr-note"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">📋 Lý do phân tích</div>
+        <div id="an-details" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <div class="card" id="an-wait-card">
+        <div class="card-label">⏳ Cần chờ thêm</div>
+        <div id="an-wait" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+
+    <div id="an-empty" style="text-align:center;padding:40px;color:var(--text3)">
+      <div style="font-size:32px;margin-bottom:10px">📊</div>
+      Điền giá hiện tại để bắt đầu phân tích
+    </div>
+
+  </div>
 </div>
 
 <!-- ══ MODAL ══ -->
@@ -1201,6 +1376,195 @@ window.addEventListener('DOMContentLoaded',()=>{
     setTimeout(()=>{ const p=$('pw-input'); if(p) p.focus(); },100);
   }
 });
+
+// ── ANALYSIS ─────────────────────────────────────────────────
+function runAnalysis(){
+  const price = parseNum($('an-price').value);
+  const ma7   = parseNum($('an-ma7').value);
+  const ma25  = parseNum($('an-ma25').value);
+  const ma99  = parseNum($('an-ma99').value);
+  const rsi   = parseFloat($('an-rsi').value);
+  const c1h   = $('an-c1h').value;
+  const c4h   = $('an-c4h').value;
+
+  if(!price){ $('an-result').style.display='none'; $('an-empty').style.display='block'; return; }
+  $('an-result').style.display='block'; $('an-empty').style.display='none';
+
+  let bullScore=0, bearScore=0, items=[], waits=[];
+
+  // 1. Giá vs MA7
+  if(ma7){
+    if(price > ma7){
+      bullScore+=2;
+      items.push({t:'pos',icon:'📈',lbl:'Giá > MA7',txt:`Giá (${fmtNum(price)}) đang trên MA7 (${fmtNum(ma7)}) — đà ngắn hạn đang tăng.`});
+    } else {
+      bearScore+=2;
+      items.push({t:'neg',icon:'📉',lbl:'Giá < MA7',txt:`Giá dưới MA7 (${fmtNum(ma7)}) — đà ngắn hạn đang yếu.`});
+    }
+  }
+
+  // 2. Giá vs MA25
+  if(ma25){
+    if(price > ma25){
+      bullScore+=2;
+      items.push({t:'pos',icon:'💚',lbl:'Giá > MA25',txt:`Giá trên MA25 (${fmtNum(ma25)}) — xu hướng trung hạn tốt.`});
+    } else {
+      bearScore+=2;
+      items.push({t:'neg',icon:'❗',lbl:'Giá < MA25',txt:`Giá dưới MA25 (${fmtNum(ma25)}) — mất hỗ trợ trung hạn, cẩn thận LONG.`});
+    }
+  }
+
+  // 3. Giá vs MA99
+  if(ma99){
+    if(price > ma99){
+      bullScore+=1;
+      items.push({t:'pos',icon:'🏔',lbl:'Giá > MA99',txt:`Giá trên MA99 (${fmtNum(ma99)}) — xu hướng dài hạn vẫn tăng.`});
+    } else {
+      bearScore+=2;
+      items.push({t:'neg',icon:'🌊',lbl:'Giá < MA99',txt:`Giá dưới MA99 (${fmtNum(ma99)}) — xu hướng dài hạn đang giảm, rủi ro cao khi LONG.`});
+    }
+  }
+
+  // 4. MA xếp thứ tự (MA7 > MA25 > MA99 = bullish stack)
+  if(ma7 && ma25 && ma99){
+    if(ma7 > ma25 && ma25 > ma99){
+      bullScore+=2;
+      items.push({t:'pos',icon:'⭐',lbl:'MA Stack Bullish: MA7 > MA25 > MA99',txt:'Ba đường MA xếp thứ tự tăng — tín hiệu xu hướng tăng mạnh nhất.'});
+    } else if(ma7 < ma25 && ma25 < ma99){
+      bearScore+=2;
+      items.push({t:'neg',icon:'💀',lbl:'MA Stack Bearish: MA7 < MA25 < MA99',txt:'Ba đường MA xếp thứ tự giảm — xu hướng giảm rõ ràng, tránh LONG.'});
+    } else {
+      items.push({t:'neu',icon:'🔀',lbl:'MA đang đan xen nhau',txt:'Các đường MA chưa xếp thứ tự rõ — thị trường đang tích lũy hoặc chuyển trend.'});
+      waits.push('Chờ MA7, MA25, MA99 xếp thứ tự rõ ràng trước khi vào lệnh.');
+    }
+  }
+
+  // 5. RSI
+  if(!isNaN(rsi) && rsi > 0){
+    if(rsi > 70){
+      bearScore+=2;
+      items.push({t:'neg',icon:'🔥',lbl:`RSI = ${rsi} — Quá mua (Overbought)`,txt:'RSI trên 70: giá đang kéo căng. Không vào LONG mới, chờ RSI về dưới 70 mới xét.'});
+      waits.push('Chờ RSI hạ xuống dưới 70 trước khi LONG.');
+    } else if(rsi >= 55){
+      bullScore+=2;
+      items.push({t:'pos',icon:'💪',lbl:`RSI = ${rsi} — Momentum mạnh`,txt:'RSI 55–70: đà tăng khoẻ, chưa quá mua. Vùng tốt để LONG theo trend.'});
+    } else if(rsi >= 45){
+      items.push({t:'neu',icon:'⚖️',lbl:`RSI = ${rsi} — Trung tính`,txt:'RSI quanh 50: chưa có tín hiệu rõ. Chờ RSI thoát lên trên 55 mới xét LONG.'});
+      waits.push('Chờ RSI vượt 55 để xác nhận đà tăng.');
+    } else if(rsi >= 30){
+      bearScore+=2;
+      items.push({t:'neg',icon:'📉',lbl:`RSI = ${rsi} — Momentum yếu`,txt:'RSI 30–45: đà đang yếu/giảm. Tránh LONG, có thể xét SHORT nếu có thêm tín hiệu.'});
+    } else {
+      bullScore+=1;
+      items.push({t:'pos',icon:'🎣',lbl:`RSI = ${rsi} — Quá bán (Oversold)`,txt:'RSI dưới 30: có thể sắp bật phục hồi. Chờ nến 1h xanh xác nhận trước khi vào.'});
+      waits.push('RSI quá bán — chờ nến 1h xanh xác nhận đảo chiều trước khi LONG.');
+    }
+  }
+
+  // 6. Nến 1h
+  if(c1h === 'green'){
+    bullScore+=1;
+    items.push({t:'pos',icon:'🟢',lbl:'Nến 1h xanh',txt:'Nến 1h đang tăng — xác nhận ngắn hạn đang có lực mua.'});
+  } else if(c1h === 'red'){
+    bearScore+=1;
+    items.push({t:'neg',icon:'🔴',lbl:'Nến 1h đỏ',txt:'Nến 1h đang giảm — chưa có xác nhận đảo chiều, đừng vội LONG.'});
+    waits.push('Chờ nến 1h tiếp theo đóng xanh để xác nhận trước khi vào LONG.');
+  }
+
+  // 7. Nến 4h
+  if(c4h === 'green'){
+    bullScore+=2;
+    items.push({t:'pos',icon:'🟢',lbl:'Nến 4h xanh',txt:'Nến 4h tăng — xu hướng trung hạn đang tốt, hỗ trợ cho LONG.'});
+  } else if(c4h === 'red'){
+    bearScore+=2;
+    items.push({t:'neg',icon:'🔴',lbl:'Nến 4h đỏ',txt:'Nến 4h đang giảm — cẩn thận, xu hướng trung hạn đang chống lại LONG.'});
+  }
+
+  // ── SIGNAL ───────────────────────────────────────────────────
+  const total = bullScore + bearScore || 1;
+  const bullPct = Math.round(bullScore/total*100);
+  let signal, signalClass, signalSub;
+
+  if(bullScore >= bearScore + 4){
+    signal = '▲ LONG'; signalClass = 'signal-long';
+    signalSub = `${bullPct}% tín hiệu tăng · Bull: ${bullScore} điểm | Bear: ${bearScore} điểm`;
+  } else if(bearScore >= bullScore + 4){
+    signal = '▼ SHORT'; signalClass = 'signal-short';
+    signalSub = `${100-bullPct}% tín hiệu giảm · Bear: ${bearScore} điểm | Bull: ${bullScore} điểm`;
+  } else {
+    signal = '⏳ CHỜ'; signalClass = 'signal-wait';
+    signalSub = `Tín hiệu chưa rõ · Bull: ${bullScore} | Bear: ${bearScore} — cần thêm xác nhận`;
+    if(!waits.length) waits.push('Tín hiệu Bull và Bear gần bằng nhau — đừng vào lệnh khi thị trường chưa rõ hướng.');
+  }
+
+  // ── ENTRY / TP / SL ─────────────────────────────────────────
+  const isLong = bullScore > bearScore;
+  const margin = parseFloat($('an-margin').value) || 50;
+  const lev    = parseFloat($('an-lev').value) || 5;
+  const size   = margin * lev;
+
+  if(price){
+    const entry  = price;
+    const tp     = isLong ? entry * 1.015 : entry * 0.985;
+    const sl     = isLong ? entry * 0.99  : entry * 1.01;
+    const profit = size * 0.015;
+    const loss   = size * 0.01;
+    const rr     = (profit/loss).toFixed(1);
+
+    $('an-entry').textContent = fmtUSD(entry);
+    $('an-entry-note').textContent = isLong ? 'Vào khi nến 15 phút xanh xác nhận' : 'Vào khi nến 15 phút đỏ xác nhận';
+    $('an-tp').textContent = fmtUSD(tp);
+    $('an-tp-note').textContent = `+1.5% · Lãi ước tính: +${fmtUSD(profit)}`;
+    $('an-sl').textContent = fmtUSD(sl);
+    $('an-sl-note').textContent = `-1% · Lỗ nếu dính SL: -${fmtUSD(loss)}`;
+    $('an-rr').textContent = rr + ' : 1';
+    $('an-rr-note').textContent = `Size: ${fmtUSD(size)} ($${margin} × ${lev}x) · ✅ Phù hợp 15 phút`;
+  }
+
+  $('an-signal').textContent = signal;
+  $('an-signal').className = signalClass;
+  $('an-signal-sub').textContent = signalSub;
+  $('an-signal-box').style.borderTop = `4px solid ${signalClass==='signal-long'?'var(--green)':signalClass==='signal-short'?'var(--red)':'var(--yellow)'}`;
+
+  $('an-details').innerHTML = items.map(i=>`
+    <div class="an-item ${i.t}">
+      <span class="an-icon">${i.icon}</span>
+      <div class="an-text"><div class="an-label">${i.lbl}</div><div style="color:var(--text2)">${i.txt}</div></div>
+    </div>`).join('');
+
+  const wc=$('an-wait-card');
+  if(signal === '⏳ CHỜ'){
+    // Tính thiếu gì để LONG và thiếu gì để SHORT
+    const needForLong=[], needForShort=[];
+
+    if(ma7 && price <= ma7)  needForLong.push('Giá cần vượt lên trên MA7 ('+fmtNum(ma7)+')');
+    if(ma25 && price <= ma25) needForLong.push('Giá cần vượt lên trên MA25 ('+fmtNum(ma25)+')');
+    if(!isNaN(rsi) && rsi < 55) needForLong.push('RSI cần tăng lên trên 55 (hiện: '+rsi+')');
+    if(c1h === 'red' || !c1h) needForLong.push('Nến 15 phút cần đóng xanh');
+    if(c4h === 'red' || !c4h) needForLong.push('Nến 1h cần đóng xanh');
+
+    if(ma7 && price >= ma7)  needForShort.push('Giá cần xuống dưới MA7 ('+fmtNum(ma7)+')');
+    if(ma25 && price >= ma25) needForShort.push('Giá cần xuống dưới MA25 ('+fmtNum(ma25)+')');
+    if(!isNaN(rsi) && rsi > 45) needForShort.push('RSI cần giảm xuống dưới 45 (hiện: '+rsi+')');
+    if(c1h === 'green' || !c1h) needForShort.push('Nến 15 phút cần đóng đỏ');
+    if(c4h === 'green' || !c4h) needForShort.push('Nến 1h cần đóng đỏ');
+
+    wc.style.display='block';
+    $('an-wait-card').querySelector('.card-label').textContent = '🔍 Cần gì để vào lệnh?';
+    $('an-wait').innerHTML = `
+      <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;letter-spacing:.5px">▲ ĐỂ LONG — cần thêm:</div>
+      ${needForLong.map(w=>`<div class="an-item pos" style="margin-bottom:4px"><span class="an-icon">✅</span><div class="an-text" style="color:var(--text2)">${w}</div></div>`).join('')}
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin:12px 0 6px;letter-spacing:.5px">▼ ĐỂ SHORT — cần thêm:</div>
+      ${needForShort.map(w=>`<div class="an-item neg" style="margin-bottom:4px"><span class="an-icon">✅</span><div class="an-text" style="color:var(--text2)">${w}</div></div>`).join('')}
+    `;
+  } else if(waits.length){
+    wc.style.display='block';
+    $('an-wait-card').querySelector('.card-label').textContent = '⏳ Lưu ý thêm';
+    $('an-wait').innerHTML=waits.map(w=>`
+      <div class="an-item neu"><span class="an-icon">⏳</span>
+      <div class="an-text" style="color:var(--text2)">${w}</div></div>`).join('');
+  } else { wc.style.display='none'; }
+}
 </script>
 
 <!-- SETTINGS MODAL -->
